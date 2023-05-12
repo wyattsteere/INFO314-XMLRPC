@@ -8,6 +8,7 @@ import javax.xml.xpath.*;
 import org.w3c.dom.*;
 
 import org.w3c.dom.Node;
+import org.w3c.dom.xpath.XPathResult;
 
 /**
  * This approach uses the java.net.http.HttpClient classes, which
@@ -56,18 +57,22 @@ public class Client {
     }
 
     public static int sendReq(String calcOp, Object... args) throws Exception {
-        String params = "<params>";
+        String parameters = "       <params>\r\n";
         for (Object arg : args) {
             if (arg instanceof Integer) {
-                params+= "<param><value><i4>" +arg + "</i4></value></param>";
+                parameters += "<param><value><i4>" + arg + "</i4></value></param>\r\n";
             } else if (arg instanceof String) {
-                params+= "<param><value><string>" + arg + "</string></value></param>";
+                parameters += "<param><value><string>" + arg + "</string></value></param>\r\n";
             }
         }
-        params +="</params>";
+        parameters += "     </params>";
 
-        String reqBody = "<?xml version='1.0'?><methodCall><methodName>" + calcOp + "</methodName><params>";
-        reqBody += params + "</params></methodCall>";
+        String reqBody = "<?xml version='1.0'?>\r\n<methodCall>\r\n<methodName>" + calcOp + "</methodName>\r\n";
+        reqBody += parameters + "       </params>\r\n</methodCall>";
+
+
+
+//        System.out.println(reqBody);
 
         HttpRequest httpReq = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
@@ -80,6 +85,7 @@ public class Client {
     }
 
     public static int responseHandler(String response) throws Exception {
+        System.out.println(response);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
         ByteArrayInputStream input =  new ByteArrayInputStream(
@@ -88,8 +94,9 @@ public class Client {
 
         XPath xPath =  XPathFactory.newInstance().newXPath();
         String expression = "/methodResponse/params/param/value/i4";
-        Node node = (Node) xPath.compile(expression).evaluate(doc, XPathConstants.NODE);
-        System.out.println(Integer.parseInt(node.getTextContent()));
-        return Integer.parseInt(node.getTextContent());
+        Node node = (Node) xPath.compile(expression).evaluate(
+                doc, XPathConstants.NODE);
+        int intValue = Integer.parseInt(node.getTextContent());
+        return intValue;
     }
 }
